@@ -1,0 +1,49 @@
+#app {
+    width: 100vw;
+    height: 100vh;
+}
+body {
+    margin: 0;
+    padding: 0;
+}
+.bst_setting{
+    display: flex;
+    height: 100%;
+}
+.sidebar_menu{
+    height: 100%;
+    width: 300px;
+    background-color: #F1F1F1;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+}
+.sidebar{
+    height: auto;
+    width: 100%;
+    padding: 0;
+}
+.sidebar a{
+    width: 100%;
+    height: auto;
+    list-style-type: none;
+    margin: 0;
+    padding: 20px 0 20px 20px;
+    color: #303030;
+    align-items: center;
+    font-weight: 500;
+    font-size: 18px;
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
+}
+.sidebar a:hover{
+    background-color: #C1C1C1;
+}
+.active_link{
+    background-color: #C1C1C1;
+}
+.bst_setting .content{
+    padding-left: 300px;
+    width: 100%;
+}

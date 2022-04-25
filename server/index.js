@@ -7,6 +7,10 @@ import "dotenv/config";
 
 import applyAuthMiddleware from "./middleware/auth.js";
 import verifyRequest from "./middleware/verify-request.js";
+import axios from "axios";
+import { image } from "image-downloader";
+import * as fs from 'fs';
+
 
 const USE_ONLINE_TOKENS = true;
 const TOP_LEVEL_OAUTH_COOKIE = "shopify_top_level_oauth";
@@ -31,7 +35,7 @@ const ACTIVE_SHOPIFY_SHOPS = {};
 Shopify.Webhooks.Registry.addHandler("APP_UNINSTALLED", {
   path: "/webhooks",
   webhookHandler: async (topic, shop, body) => {
-    delete ACTIVE_SHOPIFY_SHOPS[shop]
+    delete ACTIVE_SHOPIFY_SHOPS[shop];
   },
 });
 
@@ -94,20 +98,83 @@ export async function createServer(
   });
 
   app.use("/*", (req, res, next) => {
-    const shop = req.query.shop;
+    const { shop } = req.query;
 
     // Detect whether we need to reinstall the app, any request from Shopify will
     // include a shop in the query parameters.
     if (app.get("active-shopify-shops")[shop] === undefined && shop) {
-      res.redirect(`/auth?shop=${shop}`);
+      res.redirect(`/auth?${new URLSearchParams(req.query).toString()}`);
     } else {
       next();
     }
   });
+  app.post("/api/bst/instagram", (req, res) =>{
+    const infor = req.body;
+    var userid = infor.id;
+    var limit = infor.numOfPhotos;
+    var accesstoken = infor.token;
 
+    var config = {
+      method: 'get',
+      url: 'https://graph.instagram.com/'+userid+'/media?fields=media_url,thumbnail_url,caption,media_type,username,permalink&limit='+limit+'&access_token='+accesstoken,
+      headers: { }
+    };
+    
+    axios(config)
+    .then(function (response) {
+      const data = Object.values( response.data);
+
+      var res = [];
+      res.push(...data[0]);
+      res.forEach(element => {
+          const options = {
+            url: Object.values(element)[0],
+            dest: './theme-app-extension/assets'
+          }
+          image(options)
+            .then(({ filename }) => {
+              console.log('Saved to', filename)
+            })
+            .catch((err) => console.error(err))
+      });
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+  })
+
+  app.post("/api/bst", (req, res) => {
+    const infor = req.body;
+    var userid = infor.id;
+    var limit = infor.numOfPhotos;
+    var accesstoken = infor.token;
+    var setting_id =  infor.setting_id;
+    const dataPath = './config/setting_data.json'
+    let rawdata = fs.readFileSync(dataPath);
+    var setting = (rawdata.length) ? JSON.parse(rawdata):  [];
+    if (setting instanceof Array){
+      if (setting.length !== 0) {
+        if (setting.find(o => o.setting_id === setting_id) === undefined) {
+          setting.push(infor)
+        }
+        else {
+          var element = setting.find(o => o.setting_id === setting_id)
+          if (element.setting_id === setting_id) {
+            setting = setting.map(obj => Object.values({infor}).find(o => o.setting_id === obj.setting_id) || obj);
+          }
+        }
+      }else{
+        setting.push(infor)
+      }
+    }
+    else{
+      setting = [infor]
+    }
+    fs.writeFileSync(dataPath, JSON.stringify(setting, null, 2),"utf-8");
+  })
   /**
    * @type {import('vite').ViteDevServer}
-   */
+   */ 
   let vite;
   if (!isProd) {
     vite = await import("vite").then(({ createServer }) =>

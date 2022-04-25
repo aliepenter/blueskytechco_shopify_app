@@ -1,23 +1,17 @@
 import React,{ useState, useCallback } from "react";
 import "../App.css";
 import { Page,Button,PageActions, Select,Stack,Heading,Form,FormLayout } from "@shopify/polaris";
-import { saveAs } from 'file-saver'
+import axios from 'axios';
+
 const Instagram = () => {
 
-    function downloadImage(url, filepath) {
-        return download.image({
-        url,
-        dest: filepath 
-        });
-    }
-
     const [value, setValue] = useState({
+        setting_id:2,   
         id:"",
         token:"",
         username:"",
         numOfPhotos:"",
     });
-    // const handleChange = e => setValue(prevState => ({ ...prevState, [e.target.name]: e.target.value }));
     const handleChange = (e) => {
         setValue({
             ...value,
@@ -28,35 +22,20 @@ const Instagram = () => {
     const [selected, setSelected] = useState('Yes');
 
     const handleSelectChange = useCallback((value) => setSelected(value), []);
-    const saveData = () => {
 
-        console.log(this.state)
-    }
     const options = [
         {label: 'Yes', value: '1'},
         {label: 'No', value: '0'},
       ];
-    const handleSubmit = useCallback(() => {
-        var userid = value.id;
-        var limit = value.numOfPhotos;
-        var accesstoken = value.token;
-        var verify_url = 'https://graph.instagram.com/'+userid+'/media?fields=media_url,thumbnail_url,caption,media_type,username,permalink&limit='+limit+'&access_token='+accesstoken;
-        var requestOptions = {
-            method: 'GET',
-            redirect: 'follow'
-          };
-        fetch(verify_url, requestOptions)
-            .then(response => response.json())
-            .then(result => 
-                {
-                    var res = [];
-                    res.push(...result.data);
-                    res.forEach(element => {
-                        console.log(Object.values(element)[0])
-                    });
-                })
-            .catch(error => console.log('error', error));
-    });
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        try {
+            await axios.post("https://5c35-222-252-24-157.ngrok.io/api/bst/instagram", value)
+        } catch (error) {
+            console.log(error);
+        }
+    }
     return (
         <div className="bst_instagram">
             <Page
@@ -65,7 +44,15 @@ const Instagram = () => {
                 primaryAction={
                     {
                         content: 'Save',
-                        onClick: () => {console.log(value)}
+                        onClick: async (e) => {
+                            e.preventDefault();
+
+                            try {
+                                await axios.post("https://5c35-222-252-24-157.ngrok.io/api/bst", value)
+                            } catch (error) {
+                                console.log(error)
+                            }
+                        }
                     }
                 }
                 >
